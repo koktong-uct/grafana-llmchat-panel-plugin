@@ -19,6 +19,12 @@ The packaged backend uses `GRAFANA_URL=https://grafana-global-dashboard-llm:3000
 ## Build a new dashboard release
 
 From the repo root in WSL, with Docker Desktop running, choose a new release tag such as `v1.9.2`.
+repo root:
+- wsl
+- cd ~/grafana-plugins/uct-llmchat-panel
+
+If fetching latest updated dashboard from litmus edge, make sure to load the tar file as image in docker first.
+Refer to ./Dockerfile.grafana for the docker command to understand.
 
 ```sh
 npm run build
@@ -31,7 +37,8 @@ docker.exe --context desktop-linux image save --platform linux/amd64 \
 ```
 
 `npm run build` generates `dist/`. `Dockerfile.grafana` copies both plugins and the route provisioning into
-the dashboard image. Use `--build-arg GRAFANA_IMAGE=...` to choose a different base dashboard image. Use `-t`
+the dashboard image. Use `--build-arg GRAFANA_IMAGE=...` to choose a different base dashboard image, make sure
+it follows the latest base image extracted from litmus edge platform! Use `-t`
 and the tar filename for the new release version.
 
 Import the new tar into Litmus and recreate the Grafana container with the new tag. Reuse the backend image
@@ -41,6 +48,8 @@ for panel-only releases.
 
 Update `server/.env` before building. The packaged image includes that file and `server/.env.grafana-ca.pem`.
 Run these commands from the repo root in WSL with Docker Desktop running.
+Docker file is at ./server/Dockerfile
+
 
 ```sh
 mkdir -p artifacts
@@ -63,6 +72,28 @@ Run the health check in the backend container’s terminal. Expect `200` and `{"
 ```sh
 node -e 'fetch("http://127.0.0.1:8787/health/postgres").then(async r => console.log(r.status, await r.text()))'
 ```
+
+## Run both containers on Litmus Edge
+
+After importing the tar files, run these commands with the image tags shown in Litmus. The example uses
+`container` as the shared Docker network name. Replace it if your network has a different name.
+
+```sh
+docker run -d --name grafana-global-dashboard-llm -p 3005:3000 --restart always grafana-global-dashboard-llm:v1.9.1
+
+docker run -d --name uct-llmchat-backend --restart always uct-llmchat-backend:1.0.1
+```
+
+Attach the shared litmus edge docker network afterward.
+
+In Compose container terminal, run (or do it in Applications > Networks > Container -> Connect the container to it):
+```sh
+docker network connect container grafana-global-dashboard-llm
+docker network connect container uct-llmchat-backend
+```
+
+Use these names for the containers or their network aliases so Grafana and the backend can find each other.
+Port `8787` stays private to Docker.
 
 ## Run the manufacturing chat locally
 
