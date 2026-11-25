@@ -1,0 +1,6 @@
+*
+!dist/
+!dist/**
+!provisioning/
+!provisioning/plugins/
+!provisioning/plugins/uct-llmchat-app.yaml

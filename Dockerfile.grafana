@@ -1,0 +1,7 @@
+# syntax=docker/dockerfile:1
+ARG GRAFANA_IMAGE=grafana-global-dashboard-llm:v1.9
+FROM ${GRAFANA_IMAGE}
+COPY --chown=472:0 --exclude=uct-llmchat-app dist/ /var/lib/grafana/plugins/uct-llmchat-panel/
+COPY --chown=472:0 dist/uct-llmchat-app/ /var/lib/grafana/plugins/uct-llmchat-app/
+COPY provisioning/plugins/uct-llmchat-app.yaml /etc/grafana/provisioning/plugins/uct-llmchat-app.yaml
+ENV GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=uct-llmchat-panel,uct-llmchat-app

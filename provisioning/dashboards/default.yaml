@@ -1,0 +1,7 @@
+apiVersion: 1
+
+providers:
+  - name: 'llm-chat'
+    type: file
+    options:
+      path: /etc/grafana/provisioning/dashboards

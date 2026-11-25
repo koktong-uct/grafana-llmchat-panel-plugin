@@ -1,0 +1,23 @@
+{
+  "$schema": "https://raw.githubusercontent.com/grafana/grafana/main/docs/sources/developers/plugins/plugin.schema.json",
+  "type": "app",
+  "name": "UCT Chat Backend",
+  "id": "uct-llmchat-app",
+  "info": {
+    "description": "Connects the UCT chat panel to the private chat backend.",
+    "author": { "name": "Uct" },
+    "version": "%VERSION%",
+    "updated": "%TODAY%"
+  },
+  "dependencies": {
+    "grafanaDependency": ">=12.1.0",
+    "plugins": []
+  },
+  "routes": [
+    {
+      "path": "chat",
+      "url": "http://uct-llmchat-backend:8787/chat",
+      "method": "POST"
+    }
+  ]
+}

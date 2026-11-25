@@ -48,4 +48,3 @@ If your project has dedicated documentation available for users, provide links h
 ## Contributing
 Do you want folks to contribute to the plugin or provide feedback through specific means? If so, tell them how!
 -->
-ee [LICENSE](LICENSE).
