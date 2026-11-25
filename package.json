@@ -19,7 +19,7 @@
     "@grafana/data": "^12.1.0",
     "@grafana/eslint-config": "^9.0.0",
     "@grafana/plugin-e2e": "^3.10.0",
-    "@grafana/runtime": "^12.1.0",
+    "@grafana/runtime": "^13.3.1",
     "@grafana/schema": "^12.1.0",
     "@grafana/sign-plugin": "^3.3.3",
     "@grafana/tsconfig": "^2.2.0",
