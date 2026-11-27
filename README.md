@@ -47,7 +47,7 @@ for panel-only releases.
 ## Rebuild the chat backend
 
 Update `server/.env` before building. The packaged image includes that file and `server/.env.grafana-ca.pem`.
-Run these commands from the repo root in WSL with Docker Desktop running.
+Run these commands from the main repo root in WSL with Docker Desktop running. (Command is already scoped to server/)
 Docker file is at ./server/Dockerfile
 
 
@@ -143,6 +143,37 @@ check also checks the tables on configured sources.
 
 Comparisons evaluate all matching equipment before ranking. An explicit site or set of IDs narrows the
 scope. Large diagnostic requests return period summaries per equipment.
+
+## Backend design
+
+The chat backend is a Node.js HTTP service in `server/`. It accepts chat requests at `POST /chat`, streams
+responses as NDJSON, and exposes `GET /health/postgres` for PostgreSQL readiness.
+
+Each turn combines the selected Grafana time range and page context with conversation history, then calls the
+configured Grafana LLM through HTTP SSE. The backend provides tools for equipment lookup, KPIs, fleet
+comparisons, and diagnostics; tool results are read only from PostgreSQL and returned to the model in the
+same turn. Requests are origin-controlled, limited by size and duration, and concurrent turns are capped.
+
+### Backend modules
+
+| File | Design |
+| --- | --- |
+| `server/src/index.ts` | HTTP entry point. Validates origins and chat requests, streams NDJSON events, serves the PostgreSQL health check, and handles shutdown. |
+| `server/src/chat.ts` | Coordinates each model turn: sends dashboard context to the LLM, runs requested tools, streams answers, and enforces a tool-call limit. |
+| `server/src/chat-tools.ts` | Defines the equipment, metrics, and diagnostics tools; validates model arguments and executes queries through the PostgreSQL layer. |
+| `server/src/grafana.ts` | Calls Grafana’s LLM app and parses its server-sent event stream, including streamed text and tool calls. |
+| `server/src/postgres.ts` | Owns read-only PostgreSQL connections, combines core equipment with optional inspection sources, and exposes metric and evidence queries. |
+| `server/src/metric-sql.ts` | Holds SQL for OEE, FPY, utilization, production counts, state hours, and diagnostic evidence. |
+| `server/src/inspection-sources.ts` | Configures optional AOI and welding inspection databases, maps their equipment, and runs source-specific KPI queries. |
+| `server/src/sql/ucap-aoi01.sql` | Calculates OEE components and utilization for UCAP Power Box AOI using its inspection tables and pass/quality rules. |
+| `server/src/sql/ucap-aoi02.sql` | Calculates OEE components and utilization for UCAP Gas Panel AOI using its separate schema and failure rules. |
+| `server/src/sql/ucme-wld01.sql` | Calculates OEE components and utilization for UCME Weldment Inspection using its inspection schema and Shanghai-time rules. |
+| `server/src/diagnostics.ts` | Maps diagnostic requests (OEE, its components, FPY, and utilization) to the KPI and evidence data they need. |
+| `server/src/equipment.ts` | Resolves equipment by normalized name, ID, serial number, alias, site, or type. |
+| `server/src/fleet-ranking.ts` | Recognizes common highest/lowest questions and formats their fleet ranking results. |
+| `server/src/query-report.ts` | Builds concise tool activity reports, comparison tables, and query context for chat follow-ups. |
+| `server/src/time-range.ts` | Validates timezone-qualified ranges and formats them in Singapore time. |
+| `server/src/types.ts` | Defines shared request, model, tool, metric, and report types, plus the backend error type. |
 
 ## What are Grafana panel plugins?
 
